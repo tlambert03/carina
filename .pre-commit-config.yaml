@@ -28,7 +28,6 @@ repos:
     rev: v0.15.6
     hooks:
       - id: ruff-check
-        args: [--fix]  # may also add '--unsafe-fixes'
       - id: ruff-format
 
   - repo: local
@@ -38,3 +37,9 @@ repos:
         entry: ty check --project .
         language: python
         pass_filenames: false
+      - id: pyright
+        name: pyright
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+        entry: uv run pyright

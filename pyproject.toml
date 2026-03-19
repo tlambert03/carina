@@ -1,20 +1,17 @@
-# https://peps.python.org/pep-0517/
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
-# https://hatch.pypa.io/latest/config/metadata/
 [tool.hatch.version]
 source = "vcs"
 
-# https://peps.python.org/pep-0621/
 [project]
 name = "carina"
 dynamic = ["version"]
 description = "Stylesheet free theming for Qt applications"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "BSD-3-Clause" }
+license = "BSD-3-Clause"
 authors = [{ name = "Talley Lambert", email = "talley.lambert@gmail.com" }]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -29,44 +26,49 @@ classifiers = [
 ]
 dependencies = []
 
-# https://peps.python.org/pep-0621/#dependencies-optional-dependencies
-# add dependencies for "extra" features here.  Not dev dependencies.
-# [project.optional-dependencies]
-# name = ["dependency"]
+[project.optional-dependencies]
+pyqt6 = ["PyQt6-Qlementine"]
+pyside6 = ["PySide6-Qlementine"]
 
 [project.urls]
 homepage = "https://github.com/tlambert03/carina"
 repository = "https://github.com/tlambert03/carina"
 
-# Entry points
-# https://peps.python.org/pep-0621/#entry-points
-# same as console_scripts entry point
-# [project.scripts]
-# carina-cli = "carina:main_cli"
-
-# [project.entry-points."some.group"]
-# tomatoes = "carina:main_tomatoes"
-
-# https://peps.python.org/pep-0735/
-# setup with `uv sync` or `pip install -e . --group dev`
 [dependency-groups]
 test = ["pytest", "pytest-cov"]
+docs = ["mkdocstrings-python>=2.0.3", "zensical>=0.0.28"]
 dev = [
     { include-group = "test" },
     "ipython>=8.18.1",
     "pdbpp>=0.12.1 ; sys_platform != 'win32'",
     "prek>=0.3.6",
+    "pyright>=1.1.408",
+    "pyside6-stubs",
     "rich>=14.3.3",
     "ruff>=0.15.6",
     "ty>=0.0.23",
 ]
-docs = [
-    "mkdocstrings-python>=2.0.3",
-    "zensical>=0.0.28",
-]
+
 
 [tool.uv.sources]
 carina = { workspace = true }
+PyQt6-Qlementine = [
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyqt6_qlementine-1.4.2.0-cp310-abi3-manylinux_2_28_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyqt6_qlementine-1.4.2.0-cp310-abi3-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyqt6_qlementine-1.4.2.0-cp310-abi3-win_amd64.whl", marker = "sys_platform == 'win32'" },
+]
+PySide6-Qlementine = [
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyside6_qlementine-1.4.2.0-cp310-abi3-linux_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyside6_qlementine-1.4.2.0-cp310-abi3-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyside6_qlementine-1.4.2.0-cp310-abi3-win_amd64.whl", marker = "sys_platform == 'win32'" },
+]
+pyside6-stubs = { git = "https://github.com/tlambert03/PySide6-stubs", rev = "v6.8.1" }
+[tool.uv]
+environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'win32'",
+]
 
 [tool.ruff]
 line-length = 88
@@ -88,17 +90,24 @@ select = [
     "C4",   # flake8-comprehensions
     "B",    # flake8-bugbear
     "A001", # flake8-builtins
+    "ANN",  # flake8-annotations
     "RUF",  # ruff-specific rules
     "TC",   # flake8-type-checking
     "TID",  # flake8-tidy-imports
 ]
 ignore = [
-    "D401", # First line should be in imperative mood (remove to opt in)
+    "ANN401", # allow the use of Any type
+    "D401",   # First line should be in imperative mood (remove to opt in)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["D", "S"]
 "docs/*.py" = ["D", "A"]
+"src/carina/_qt/**/*.py" = ["F401", "F403", "F405"]
+"src/carina/Qlementine.py" = ["F403"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -109,8 +118,6 @@ minversion = "7.0"
 addopts = ["--color=yes"]
 testpaths = ["tests"]
 filterwarnings = ["error"]
-
-[tool.mypy]
 
 # https://coverage.readthedocs.io/
 [tool.coverage.report]
@@ -146,3 +153,9 @@ python = "./.venv"
 
 [tool.ty.rules]
 unresolved-attribute = "ignore"
+
+[tool.ty.src]
+exclude = ["src/carina/Qlementine.pyi"]
+
+[tool.pyright]
+exclude = ["src/carina/Qlementine.pyi"]
