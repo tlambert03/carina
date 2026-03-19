@@ -60,6 +60,10 @@ dev = [
     "ruff>=0.15.6",
     "ty>=0.0.23",
 ]
+docs = [
+    "mkdocstrings-python>=2.0.3",
+    "zensical>=0.0.28",
+]
 
 [tool.uv.sources]
 carina = { workspace = true }
