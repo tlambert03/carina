@@ -1,6 +1,6 @@
 import carina
-from carina._demo import DemoWindow
 from carina._qt.QtWidgets import QApplication, QTabWidget
+from carina.demo import DemoWindow
 
 
 def test_imports_with_version() -> None:

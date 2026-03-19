@@ -1,3 +1,4 @@
+# ruff: noqa: D101
 """Comprehensive demo of standard Qt widgets styled with Qlementine."""
 
 from __future__ import annotations
@@ -978,6 +979,7 @@ class DemoWindow(QMainWindow):
 
 
 def main() -> None:
+    """Run the demo application."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Qt Widget Gallery")
