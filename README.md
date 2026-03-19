@@ -7,28 +7,3 @@
 [![codecov](https://codecov.io/gh/tlambert03/carina/branch/main/graph/badge.svg)](https://codecov.io/gh/tlambert03/carina)
 
 Stylesheet free theming for Qt applications
-
-## Development
-
-The easiest way to get started is to use the [github cli](https://cli.github.com)
-and [uv](https://docs.astral.sh/uv/getting-started/installation/):
-
-```sh
-gh repo fork tlambert03/carina --clone
-# or just
-# gh repo clone tlambert03/carina
-cd carina
-uv sync
-```
-
-Run tests:
-
-```sh
-uv run pytest
-```
-
-Lint files:
-
-```sh
-uv run pre-commit run --all-files
-```
