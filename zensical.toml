@@ -1,0 +1,68 @@
+[project]
+site_name = "carina"
+site_description = "Stylesheet free theming for Qt applications."
+site_author = "pyapp-kit team"
+site_url = "https://pyapp-kit.github.io/carina/"
+repo_name = "pyapp-kit/carina"
+repo_url = "https://github.com/pyapp-kit/carina"
+copyright = ""
+
+
+[project.theme]
+icon.logo = "lucide/palette"
+features = [
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.path",
+    "toc.follow",
+    "search.highlight",
+]
+font.text = "Inter"
+font.code = "Fira Code"
+
+[project.markdown_extensions.pymdownx.highlight]
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.pymdownx.inlinehilite]
+[project.markdown_extensions.pymdownx.snippets]
+[project.markdown_extensions.pymdownx.superfences]
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+[project.markdown_extensions.pymdownx.emoji]
+emoji_index = "zensical.extensions.emoji.twemoji"
+emoji_generator = "zensical.extensions.emoji.to_svg"
+
+[[project.theme.palette]]
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[project.plugins.mkdocstrings.handlers.python]
+inventories = ["https://docs.python.org/3/objects.inv"]
+paths = ["src"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+docstring_style = "numpy"
+docstring_section_style = "table"
+show_source = false
+show_symbol_type_toc = true
+# show_root_heading = false
+# separate_signature = false
+# show_bases = false
+# show_symbol_type_heading = true
+# merge_init_into_class = true
+# show_root_toc_entry = false
+# show_signature = false
+
+[[project.plugins.mkdocstrings.handlers.python.options.extensions]]
+griffe_fieldz = { strip_annotated = true, remove_fields_from_members = true }

@@ -36,7 +36,11 @@ repository = "https://github.com/tlambert03/carina"
 
 [dependency-groups]
 test = ["pytest", "pytest-cov"]
-docs = ["mkdocstrings-python>=2.0.3", "zensical>=0.0.28"]
+docs = [
+    "griffe-fieldz>=0.5.0",
+    "mkdocstrings-python>=2.0.3",
+    "zensical>=0.0.28",
+]
 dev = [
     { include-group = "test" },
     "ipython>=8.18.1",
