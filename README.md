@@ -6,7 +6,7 @@
 [![CI](https://github.com/tlambert03/carina/actions/workflows/ci.yml/badge.svg)](https://github.com/tlambert03/carina/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/tlambert03/carina/branch/main/graph/badge.svg)](https://codecov.io/gh/tlambert03/carina)
 
-Stylesheet free themeing for Qt applications
+Stylesheet free theming for Qt applications
 
 ## Development
 

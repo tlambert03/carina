@@ -7,26 +7,19 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
-# read more about configuring hatch at:
-# https://hatch.pypa.io/latest/config/build/
-[tool.hatch.build.targets.wheel]
-only-include = ["src"]
-sources = ["src"]
-
 # https://peps.python.org/pep-0621/
 [project]
 name = "carina"
 dynamic = ["version"]
-description = "Stylesheet free themeing for Qt applications"
+description = "Stylesheet free theming for Qt applications"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "Talley Lambert", email = "talley.lambert@gmail.com" }]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python :: 3",    
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -60,24 +53,23 @@ repository = "https://github.com/tlambert03/carina"
 test = ["pytest", "pytest-cov"]
 dev = [
     { include-group = "test" },
-    "ipython",
-    "mypy",
-    "pdbpp",  # https://github.com/pdbpp/pdbpp
-    "pre-commit-uv",
-    "rich",  # https://github.com/Textualize/rich
-    "ruff",
+    "ipython>=8.18.1",
+    "pdbpp>=0.12.1 ; sys_platform != 'win32'",
+    "prek>=0.3.6",
+    "rich>=14.3.3",
+    "ruff>=0.15.6",
+    "ty>=0.0.23",
 ]
 
 [tool.uv.sources]
 carina = { workspace = true }
 
-# https://docs.astral.sh/ruff
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"
 src = ["src"]
 fix = true
-# unsafe-fixes = true
+unsafe-fixes = true
 
 [tool.ruff.lint]
 pydocstyle = { convention = "numpy" }
@@ -104,27 +96,17 @@ ignore = [
 "tests/*.py" = ["D", "S"]
 "docs/*.py" = ["D", "A"]
 
-# https://docs.astral.sh/ruff/formatter/
 [tool.ruff.format]
 docstring-code-format = true
-skip-magic-trailing-comma = false  # default is false
+skip-magic-trailing-comma = false # default is false
 
-# https://docs.pytest.org/
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = ["--color=yes"]
 testpaths = ["tests"]
 filterwarnings = ["error"]
 
-# https://mypy.readthedocs.io/en/stable/config_file.html
 [tool.mypy]
-files = "src/**/"
-strict = true
-disallow_any_generics = false
-disallow_subclassing_any = false
-show_error_codes = true
-pretty = true
-# plugins = ["pydantic.mypy"]
 
 # https://coverage.readthedocs.io/
 [tool.coverage.report]
@@ -154,3 +136,9 @@ ignore = [
 # https://github.com/crate-ci/typos/blob/master/docs/reference.md
 [tool.typos.default]
 extend-ignore-identifiers-re = []
+
+[tool.ty.environment]
+python = "./.venv"
+
+[tool.ty.rules]
+unresolved-attribute = "ignore"

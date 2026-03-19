@@ -1,4 +1,4 @@
-"""Stylesheet free themeing for Qt applications"""
+"""Stylesheet free theming for Qt applications."""
 
 from importlib.metadata import PackageNotFoundError, version
 
