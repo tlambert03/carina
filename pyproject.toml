@@ -57,14 +57,14 @@ dev = [
 [tool.uv.sources]
 carina = { workspace = true }
 PyQt6-Qlementine = [
-    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyqt6_qlementine-1.4.2.0-cp310-abi3-manylinux_2_28_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
-    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyqt6_qlementine-1.4.2.0-cp310-abi3-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64'" },
-    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyqt6_qlementine-1.4.2.0-cp310-abi3-win_amd64.whl", marker = "sys_platform == 'win32'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc3/pyqt6_qlementine-1.4.2.0-cp310-abi3-manylinux_2_28_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc3/pyqt6_qlementine-1.4.2.0-cp310-abi3-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc3/pyqt6_qlementine-1.4.2.0-cp310-abi3-win_amd64.whl", marker = "sys_platform == 'win32'" },
 ]
 PySide6-Qlementine = [
-    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyside6_qlementine-1.4.2.0-cp310-abi3-linux_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
-    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyside6_qlementine-1.4.2.0-cp310-abi3-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine == 'arm64'" },
-    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc2/pyside6_qlementine-1.4.2.0-cp310-abi3-win_amd64.whl", marker = "sys_platform == 'win32'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc3/pyside6_qlementine-1.4.2.0-cp310-abi3-linux_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc3/pyside6_qlementine-1.4.2.0-cp310-abi3-macosx_11_0_arm64.whl", marker = "sys_platform == 'darwin' and platform_machine =='arm64'" },
+    { url = "https://github.com/pyapp-kit/PyQlementine/releases/download/v0.0.1rc3/pyside6_qlementine-1.4.2.0-cp310-abi3-win_amd64.whl", marker = "sys_platform == 'win32'" },
 ]
 pyside6-stubs = { git = "https://github.com/tlambert03/PySide6-stubs", rev = "v6.8.1" }
 [tool.uv]
