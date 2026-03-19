@@ -726,9 +726,8 @@ class ColorSection(QGroupBox):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__("Color Widgets", parent)
-        layout = QVBoxLayout(self)
 
-        form = QFormLayout()
+        form = QFormLayout(self)
         cb_rgb = ColorButton(self, colorMode=ColorMode.RGB)
         cb_rgb.setColor("steelblue")
         form.addRow("ColorButton (RGB):", cb_rgb)
@@ -737,11 +736,9 @@ class ColorSection(QGroupBox):
         cb_rgba.setColor("coral")
         form.addRow("ColorButton (RGBA):", cb_rgba)
 
-        layout.addLayout(form)
-
         ce = ColorEditor(self, colorMode=ColorMode.RGBA)
         ce.setColor("mediumpurple")
-        layout.addWidget(ce)
+        form.addRow("ColorEditor (RGBA):", ce)
 
 
 class StatusBadgesSection(QGroupBox):
@@ -992,7 +989,6 @@ def main() -> None:
     )
     args, _ = parser.parse_known_args()
     app = QApplication([])
-
     if args.style == "fusion":
         app.setStyle("Fusion")
     elif args.style == "qlementine":
