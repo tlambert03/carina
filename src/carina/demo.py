@@ -60,6 +60,7 @@ from carina._qt.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from carina._theme import make_qlementine_theme
 from carina.Qlementine import (
     ColorButton,
     ColorEditor,
@@ -978,9 +979,22 @@ class DemoWindow(QMainWindow):
         self.resize(1000, 750)
 
 
+def _load_themes() -> dict[str, dict]:
+    """Load themes from all_themes.json."""
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).parent / "all_themes.json"
+    with open(path) as f:
+        return json.load(f)
+
+
 def main() -> None:
     """Run the demo application."""
     import argparse
+
+    themes = _load_themes()
+    theme_names = list(themes.keys())
 
     parser = argparse.ArgumentParser(description="Qt Widget Gallery")
     parser.add_argument(
@@ -989,15 +1003,27 @@ def main() -> None:
         default="qlementine",
         help="widget style to use (default: qlementine)",
     )
+    parser.add_argument(
+        "--theme",
+        type=str.lower,
+        choices={k.lower(): k for k in theme_names},
+        default=None,
+        metavar="THEME",
+        help="theme name: " + ", ".join(theme_names),
+    )
     args, _ = parser.parse_known_args()
     app = QApplication([])
     if args.style == "fusion":
         app.setStyle("Fusion")
     elif args.style == "qlementine":
         qlem = QlementineStyle(app)
-        # qlem.setAutoIconColor(AutoIconColor.TextColor)
         qlem.setAnimationsEnabled(True)
         app.setStyle(qlem)
+
+        if args.theme:
+            key = next(k for k in theme_names if k.lower() == args.theme)
+            qt_theme = make_qlementine_theme(themes[key])
+            qlem.setTheme(qt_theme)
 
     window = DemoWindow()
     window.show()
