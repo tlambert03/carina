@@ -169,7 +169,7 @@ class TextInputsSection(QGroupBox):
         layout = QVBoxLayout(self)
 
         line_edit = QLineEdit(self)
-        line_edit.setPlaceholderText("QLineEdit — single line...")
+        line_edit.setPlaceholderText("QLineEdit - single line...")
         line_edit.setClearButtonEnabled(True)
         layout.addWidget(line_edit)
 
@@ -179,12 +179,12 @@ class TextInputsSection(QGroupBox):
         layout.addWidget(line_pw)
 
         plain_text = QPlainTextEdit(self)
-        plain_text.setPlaceholderText("QPlainTextEdit — multi-line plain text")
+        plain_text.setPlaceholderText("QPlainTextEdit - multi-line plain text")
         plain_text.setFixedHeight(60)
         layout.addWidget(plain_text)
 
         rich_text = QTextEdit(self)
-        rich_text.setPlaceholderText("QTextEdit — rich text")
+        rich_text.setPlaceholderText("QTextEdit - rich text")
         rich_text.setFixedHeight(60)
         layout.addWidget(rich_text)
 
@@ -813,7 +813,7 @@ class SegmentedAndNavSection(QGroupBox):
 
 
 class ExpanderSection(QGroupBox):
-    """Expander — animated show/hide container."""
+    """Expander - animated show/hide container."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__("Expander", parent)
