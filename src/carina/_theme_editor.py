@@ -4,8 +4,10 @@ from typing import TYPE_CHECKING, Any
 
 from carina._color_editor import ColorEditor
 from carina._qt.Qlementine import Theme
-from carina._qt.QtCore import QJsonDocument, QSize, Signal
+from carina._qt.QtCore import QEvent, QJsonDocument, QSize, Signal
+from carina._qt.QtGui import QKeySequence
 from carina._qt.QtWidgets import (
+    QApplication,
     QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
@@ -174,6 +176,8 @@ class Colors(QScrollArea):
     """Color editors for a single interaction state (Active/Hovered/…)."""
 
     changed = Signal()
+    batchStarted = Signal()
+    batchFinished = Signal()
 
     def __init__(self, theme: Theme, state: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -202,6 +206,8 @@ class Colors(QScrollArea):
             editor.colorChanged.connect(
                 lambda *, a=attr, e=editor: self._on_color_changed(a, e)
             )
+            editor.editingStarted.connect(self.batchStarted)
+            editor.editingFinished.connect(self.batchFinished)
             self._editors[attr] = editor
             assert form is not None
             form.addRow(label, editor)
@@ -357,6 +363,12 @@ class ThemeEditor(QWidget):
         self._theme = Theme(theme) if theme is not None else Theme()
         self._tabs: list[Colors | Geometries] = []
 
+        # undo/redo state: list of JSON snapshots, cursor points at current
+        self._undo_stack: list[QJsonDocument] = [self._theme.toJson()]
+        self._undo_cursor: int = 0
+        self._macro_depth: int = 0
+        self._macro_changed: bool = False
+
         layout = QVBoxLayout(self)
 
         tab_widget = QTabWidget()
@@ -364,6 +376,8 @@ class ThemeEditor(QWidget):
         for state in ("Active", "Hovered", "Pressed", "Disabled"):
             tab = Colors(self._theme, state)
             tab.changed.connect(self._on_changed)
+            tab.batchStarted.connect(self.beginMacro)
+            tab.batchFinished.connect(self.endMacro)
             tab_widget.addTab(tab, state)
             self._tabs.append(tab)
 
@@ -376,12 +390,50 @@ class ThemeEditor(QWidget):
         dump_btn.clicked.connect(self._dump_json)
         layout.addWidget(dump_btn)
 
+        # Install event filter on QApp to intercept undo/redo before child
+        # widgets (QSpinBox, QLineEdit) consume them as their own text undo.
+        app = QApplication.instance()
+        if app is not None:
+            app.installEventFilter(self)
+
+    def eventFilter(self, obj: object, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.KeyPress:
+            w = QApplication.focusWidget()
+            if w is not None and self.isAncestorOf(w):
+                if event.matches(QKeySequence.StandardKey.Undo):  # type: ignore[union-attr]
+                    self.undo()
+                    return True
+                if event.matches(QKeySequence.StandardKey.Redo):  # type: ignore[union-attr]
+                    self.redo()
+                    return True
+        return super().eventFilter(obj, event)
+
     def _on_changed(self) -> None:
         # Roundtrip through JSON so the C++ Theme re-runs initializePalette()
         # (mutating attributes in-place leaves theme.palette stale).
         self._theme = Theme.fromJsonDoc(self._theme.toJson())
         for tab in self._tabs:
             tab._theme = self._theme
+        self.themeChanged.emit(self._theme)
+
+        if self._macro_depth > 0:
+            # Inside a macro: live-update but defer the undo push.
+            self._macro_changed = True
+            return
+
+        # push snapshot, discard any redo history
+        self._push_snapshot()
+
+    def _push_snapshot(self) -> None:
+        self._undo_cursor += 1
+        del self._undo_stack[self._undo_cursor :]
+        self._undo_stack.append(self._theme.toJson())
+
+    def _apply_snapshot(self, doc: QJsonDocument) -> None:
+        """Restore theme from a JSON snapshot and refresh all editors."""
+        self._theme = Theme.fromJsonDoc(doc)
+        for tab in self._tabs:
+            tab.setTheme(self._theme)
         self.themeChanged.emit(self._theme)
 
     # -- public API ---------------------------------------------------------
@@ -398,6 +450,41 @@ class ThemeEditor(QWidget):
         self._theme = Theme(theme)
         for tab in self._tabs:
             tab.setTheme(self._theme)
+
+        # reset undo history to this new baseline
+        self._undo_stack = [self._theme.toJson()]
+        self._undo_cursor = 0
+
+    def beginMacro(self) -> None:
+        """Begin batching changes into a single undo entry."""
+        self._macro_depth += 1
+        self._macro_changed = False
+
+    def endMacro(self) -> None:
+        """End macro; push one undo entry if anything changed."""
+        if self._macro_depth > 0:
+            self._macro_depth -= 1
+        if self._macro_depth == 0 and self._macro_changed:
+            self._push_snapshot()
+            self._macro_changed = False
+
+    def undo(self) -> None:
+        """Restore the previous theme state."""
+        if self._undo_cursor > 0:
+            self._undo_cursor -= 1
+            self._apply_snapshot(self._undo_stack[self._undo_cursor])
+
+    def redo(self) -> None:
+        """Re-apply the next theme state."""
+        if self._undo_cursor < len(self._undo_stack) - 1:
+            self._undo_cursor += 1
+            self._apply_snapshot(self._undo_stack[self._undo_cursor])
+
+    def canUndo(self) -> bool:
+        return self._undo_cursor > 0
+
+    def canRedo(self) -> bool:
+        return self._undo_cursor < len(self._undo_stack) - 1
 
     # -- dump ---------------------------------------------------------------
 

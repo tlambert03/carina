@@ -56,6 +56,8 @@ class ColorEditor(QWidget):
     """Color swatch + hex line edit with inline color picker."""
 
     colorChanged = Signal()
+    editingStarted = Signal()
+    editingFinished = Signal()
 
     def __init__(
         self, color: QColor | None = None, parent: QWidget | None = None
@@ -123,6 +125,8 @@ class ColorEditor(QWidget):
         self._popover.setPadding(QMargins(0, 0, 0, 0))
         self._popover.setPreferredPosition(Popover.Position.Top)
         self._popover.setPreferredAlignment(Popover.Alignment.Center)
+        self._popover.closed.connect(self.editingFinished)
+        self.editingStarted.emit()
         self._popover.openPopover()
 
     def _on_picker_color(self, color: QColor) -> None:
