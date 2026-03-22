@@ -430,6 +430,7 @@ class ThemeToolsWindow(QMainWindow):
 
 
 def main() -> None:
+    """Entry point for the theme tools application."""
     app = QApplication(sys.argv)
     app.setApplicationDisplayName("Qlementine Theme Tools")
 

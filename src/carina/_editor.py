@@ -1,20 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+from carina._color_editor import ColorEditor
 from carina._qt.Qlementine import Theme
-from carina._qt.QtCore import QEvent, QJsonDocument, QSize, Signal
-from carina._qt.QtGui import QColor, QPainter
+from carina._qt.QtCore import QJsonDocument, QSize, Signal
 from carina._qt.QtWidgets import (
-    QColorDialog,
     QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
-    QLineEdit,
     QPushButton,
     QScrollArea,
-    QSizePolicy,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -24,133 +21,6 @@ from carina._theme import make_qlementine_theme
 
 if TYPE_CHECKING:
     from carina._theme import ThemeDict
-
-# ---------------------------------------------------------------------------
-# ColorEditor — color swatch + hex line edit with live dialog updates
-# ---------------------------------------------------------------------------
-
-_SWATCH_SIZE = 24
-
-
-class _ColorSwatch(QPushButton):
-    """Small button that displays a solid color."""
-
-    def __init__(self, color: QColor, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self._color = QColor(color)
-        self.setFixedSize(_SWATCH_SIZE, _SWATCH_SIZE)
-
-    def setColor(self, color: QColor) -> None:
-        if self._color != color:
-            self._color = QColor(color)
-            self.update()
-
-    def paintEvent(self, event: object) -> None:
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.setPen(self.palette().mid().color())
-        p.setBrush(self._color)
-        p.drawEllipse(self.rect().adjusted(1, 1, -1, -1))
-        p.end()
-
-
-def _color_to_hex(color: QColor) -> str:
-    if color.alpha() < 255:
-        return color.name(QColor.NameFormat.HexArgb)
-    return color.name(QColor.NameFormat.HexRgb)
-
-
-class ColorEditor(QWidget):
-    """Color swatch + hex line edit with two-way sync and live dialog."""
-
-    colorChanged = Signal()
-
-    def __init__(
-        self, color: QColor | None = None, parent: QWidget | None = None
-    ) -> None:
-        super().__init__(parent)
-        if color is None:
-            color = QColor("black")
-        self._color = QColor(color)
-        self._updating = False
-
-        lay = QHBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-
-        self._swatch = _ColorSwatch(color, self)
-        self._swatch.clicked.connect(self._open_dialog)
-        lay.addWidget(self._swatch)
-
-        self._line_edit = QLineEdit(self)
-        self._line_edit.setText(_color_to_hex(color))
-        self._line_edit.editingFinished.connect(self._on_text_edited)
-        lay.addWidget(self._line_edit)
-
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-
-    def color(self) -> QColor:
-        return self._color
-
-    def setColor(self, color: QColor) -> None:
-        if self._color == color:
-            return
-        self._color = QColor(color)
-        self._sync_widgets()
-        self.colorChanged.emit()
-
-    def _sync_widgets(self) -> None:
-        """Push current color to swatch and line edit without re-emitting."""
-        self._updating = True
-        self._swatch.setColor(self._color)
-        self._line_edit.setText(_color_to_hex(self._color))
-        self._updating = False
-
-    def _on_text_edited(self) -> None:
-        if self._updating:
-            return
-        candidate = QColor(self._line_edit.text().strip())
-        if candidate.isValid():
-            self._color = candidate
-            self._swatch.setColor(candidate)
-            # Normalize display to hex
-            self._line_edit.setText(_color_to_hex(candidate))
-            self.colorChanged.emit()
-
-    def _open_dialog(self) -> None:
-        original = QColor(self._color)
-        dlg = QColorDialog(self)
-        dlg.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog)
-        dlg.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel)
-        dlg.setCurrentColor(self._color)
-        # Block PaletteChange events on the dialog and all its children.
-        # Our live colorChanged signal triggers style.setTheme() →
-        # QApplication.setPalette(), which would corrupt the dialog's
-        # internal color picker state without this filter.
-        blocker = _PaletteChangeFilter(dlg)
-        dlg.installEventFilter(blocker)
-        for child in dlg.findChildren(QWidget):
-            child.installEventFilter(blocker)
-        dlg.currentColorChanged.connect(self._on_dialog_color)
-        if dlg.exec():
-            self.setColor(dlg.selectedColor())
-        else:
-            self.setColor(original)
-
-    def _on_dialog_color(self, color: QColor) -> None:
-        """Live update as user picks in the dialog."""
-        self._color = QColor(color)
-        self._sync_widgets()
-        self.colorChanged.emit()
-
-
-class _PaletteChangeFilter(QWidget):
-    """Event filter that blocks PaletteChange on the color dialog."""
-
-    def eventFilter(self, watched: object, event: object) -> bool:
-        if isinstance(event, QEvent) and event.type() == QEvent.Type.PaletteChange:
-            return True
-        return super().eventFilter(watched, event)  # type: ignore[arg-type]
-
 
 # ---------------------------------------------------------------------------
 # Color / geometry data definitions
@@ -439,7 +309,12 @@ class Geometries(QScrollArea):
                     h_spin.setValue(size_val.height())
                     h_spin.setPrefix("H:")
 
-                    def _on_size(_, a=attr, ws=w_spin, hs=h_spin) -> None:
+                    def _on_size(
+                        _: Any,
+                        a: str = attr,
+                        ws: QSpinBox = w_spin,
+                        hs: QSpinBox = h_spin,
+                    ) -> None:
                         self._on_changed(a, QSize(ws.value(), hs.value()))
 
                     w_spin.valueChanged.connect(_on_size)

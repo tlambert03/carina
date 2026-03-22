@@ -1,3 +1,5 @@
+"""Tester application to test the Qlementine style."""
+
 import sys
 
 from carina._editor import ThemeEditor
@@ -68,15 +70,14 @@ class Tester(QtW.QMainWindow):
 
 if __name__ == "__main__":
     app = QtW.QApplication(sys.argv)
-    if "--native" not in sys.argv:
-        style = QlementineStyle(app)
-        app.setStyle(style)
 
     tester = Tester()
     tester.resize(600, 400)
     tester.show()
 
     if "--native" not in sys.argv:
+        style = QlementineStyle(app)
+        app.setStyle(style)
         editor = ThemeEditor(style.theme())
         editor.themeChanged.connect(style.setTheme)
         editor.setWindowTitle("Theme Editor")
