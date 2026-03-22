@@ -32,25 +32,30 @@ if TYPE_CHECKING:
 # Each base_attr expands to: base, baseHovered, basePressed, baseDisabled
 # NOTE: *Transparent variants are derived by qlementine, not editable.
 _VARIANT_COLORS: list[tuple[str, str, str]] = [
-    ("Neutral", "neutralColor", "Neutral"),
+    # Primary family (~92 combined uses in QlementineStyle)
     ("Primary", "primaryColor", "Primary"),
     ("Primary Foreground", "primaryColorForeground", "Foreground"),
     ("Primary Alternative", "primaryAlternativeColor", "Alternative"),
+    # Secondary family (~64)
     ("Secondary", "secondaryColor", "Secondary"),
-    ("Secondary Foreground", "secondaryColorForeground", "Foreground"),
     ("Secondary Alternative", "secondaryAlternativeColor", "Alternative"),
-    ("Border", "borderColor", "Border"),
+    ("Secondary Foreground", "secondaryColorForeground", "Foreground"),
+    # Neutral (~51)
+    ("Neutral", "neutralColor", "Neutral"),
+    # Status (~25)
     ("Status", "statusColorSuccess", "Success"),
-    ("Status", "statusColorInfo", "Info"),
     ("Status", "statusColorWarning", "Warning"),
     ("Status", "statusColorError", "Error"),
+    ("Status", "statusColorInfo", "Info"),
     # ("Status", "statusColorForeground", "Foreground"),  # not serialized by qlementine toJson()
+    # Border (~24)
+    ("Border", "borderColor", "Border"),
 ]
 
 # Standalone colors (Active tab only): (section_label, [(attr, label), ...])
 _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
     (
-        "Background",
+        "Background",  # ~24 uses
         [
             ("backgroundColorMain1", "Main 1"),
             ("backgroundColorMain2", "Main 2"),
@@ -61,18 +66,8 @@ _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
             ("backgroundColorTabBar", "Tab Bar"),
         ],
     ),
-    ("Focus", [("focusColor", "Focus")]),
     (
-        "Shadow",
-        [
-            ("shadowColor1", "Shadow 1"),
-            ("shadowColor2", "Shadow 2"),
-            ("shadowColor3", "Shadow 3"),
-            # ("shadowColorTransparent", "Shadow Transparent"),  # derived by qlementine
-        ],
-    ),
-    (
-        "Semi-transparent",
+        "Semi-transparent",  # ~10 uses
         [
             ("semiTransparentColor1", "Level 1"),
             ("semiTransparentColor2", "Level 2"),
@@ -81,6 +76,16 @@ _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
             # ("semiTransparentColorTransparent", "Transparent"),  # derived by qlementine
         ],
     ),
+    (
+        "Shadow",  # ~7 uses
+        [
+            ("shadowColor1", "Shadow 1"),
+            ("shadowColor2", "Shadow 2"),
+            ("shadowColor3", "Shadow 3"),
+            # ("shadowColorTransparent", "Shadow Transparent"),  # derived by qlementine
+        ],
+    ),
+    ("Focus", [("focusColor", "Focus")]),  # ~2 uses
 ]
 
 # Geometry properties: (section, [(attr, label, type, min, max), ...])
