@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Any, Required, Unpack
 
-    from carina import Qlementine
+    from carina._qt import Qlementine
 
     class ThemeMetaDict(TypedDict):
         name: str
@@ -556,7 +556,7 @@ def make_qlementine_theme(
     theme: ThemeDict | Theme | None = None, /, **kwargs: Any
 ) -> Qlementine.Theme:
     """Convert a ThemeDict or Theme configuration into a Qlementine.Theme instance."""
-    from carina import Qlementine
+    from carina._qt import Qlementine
     from carina._qt.QtCore import QJsonDocument
 
     if isinstance(theme, Theme):

@@ -57,6 +57,7 @@ dev = [
 [tool.uv.sources]
 carina = { workspace = true }
 pyside6-stubs = { git = "https://github.com/tlambert03/PySide6-stubs", rev = "v6.8.1" }
+pyqt6-qlementine = { path = "../PyQlementine/packages/PyQt6-Qlementine" }
 
 [tool.uv]
 environments = [
@@ -150,7 +151,7 @@ python = "./.venv"
 unresolved-attribute = "ignore"
 
 [tool.ty.src]
-exclude = ["src/carina/Qlementine.pyi"]
+exclude = ["src/carina/_qt/Qlementine.pyi"]
 
 [tool.pyright]
-exclude = ["src/carina/Qlementine.pyi"]
+exclude = ["src/carina/_qt/Qlementine.pyi"]

@@ -6,6 +6,30 @@ from __future__ import annotations
 import sys
 from datetime import date, time
 
+from carina._qt.Qlementine import (
+    ColorButton,
+    ColorEditor,
+    ColorMode,
+    CommandLinkButton,
+    Expander,
+    IconWidget,
+    Label,
+    LineEdit,
+    LoadingSpinner,
+    Menu,
+    NavigationBar,
+    NotificationBadge,
+    PlainTextEdit,
+    PopoverButton,
+    QlementineStyle,
+    SegmentedControl,
+    Status,
+    StatusBadge,
+    StatusBadgeSize,
+    StatusBadgeWidget,
+    Switch,
+    TextRole,
+)
 from carina._qt.QtCore import QDate, QSize, Qt, QTime
 from carina._qt.QtGui import QAction, QKeySequence
 from carina._qt.QtWidgets import (
@@ -59,30 +83,6 @@ from carina._qt.QtWidgets import (
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
-)
-from carina.Qlementine import (
-    ColorButton,
-    ColorEditor,
-    ColorMode,
-    CommandLinkButton,
-    Expander,
-    IconWidget,
-    Label,
-    LineEdit,
-    LoadingSpinner,
-    Menu,
-    NavigationBar,
-    NotificationBadge,
-    PlainTextEdit,
-    PopoverButton,
-    QlementineStyle,
-    SegmentedControl,
-    Status,
-    StatusBadge,
-    StatusBadgeSize,
-    StatusBadgeWidget,
-    Switch,
-    TextRole,
 )
 
 # ---------------------------------------------------------------------------
