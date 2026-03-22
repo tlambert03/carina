@@ -26,27 +26,23 @@ if TYPE_CHECKING:
 # Color / geometry data definitions
 # ---------------------------------------------------------------------------
 
-# Stateful color groups: (section_label, base_attr, has_transparent)
-# Pattern: base, baseHovered, basePressed, baseDisabled[, baseTransparent]
-_STATEFUL_COLORS: list[tuple[str, str, bool]] = [
-    ("Neutral", "neutralColor", True),
-    ("Primary", "primaryColor", True),
-    ("Primary Foreground", "primaryColorForeground", True),
-    ("Primary Alternative", "primaryAlternativeColor", True),
-    ("Secondary", "secondaryColor", True),
-    ("Secondary Foreground", "secondaryColorForeground", True),
-    ("Secondary Alternative", "secondaryAlternativeColor", True),
-    ("Border", "borderColor", True),
-]
-
-# Status color groups: (section_label, base_attr)
-# Pattern: base, baseHovered, basePressed, baseDisabled (no Transparent)
-_STATUS_COLORS: list[tuple[str, str]] = [
-    ("Status Success", "statusColorSuccess"),
-    ("Status Info", "statusColorInfo"),
-    ("Status Warning", "statusColorWarning"),
-    ("Status Error", "statusColorError"),
-    ("Status Foreground", "statusColorForeground"),
+# Color groups with interaction-state variants: (section, base_attr, label)
+# Each base_attr expands to: base, baseHovered, basePressed, baseDisabled
+# NOTE: *Transparent variants are derived by qlementine, not editable.
+_VARIANT_COLORS: list[tuple[str, str, str]] = [
+    ("Neutral", "neutralColor", "Neutral"),
+    ("Primary", "primaryColor", "Primary"),
+    ("Primary Foreground", "primaryColorForeground", "Foreground"),
+    ("Primary Alternative", "primaryAlternativeColor", "Alternative"),
+    ("Secondary", "secondaryColor", "Secondary"),
+    ("Secondary Foreground", "secondaryColorForeground", "Foreground"),
+    ("Secondary Alternative", "secondaryAlternativeColor", "Alternative"),
+    ("Border", "borderColor", "Border"),
+    ("Status", "statusColorSuccess", "Success"),
+    ("Status", "statusColorInfo", "Info"),
+    ("Status", "statusColorWarning", "Warning"),
+    ("Status", "statusColorError", "Error"),
+    # ("Status", "statusColorForeground", "Foreground"),  # not serialized by qlementine toJson()
 ]
 
 # Standalone colors (Active tab only): (section_label, [(attr, label), ...])
@@ -58,7 +54,7 @@ _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
             ("backgroundColorMain2", "Main 2"),
             ("backgroundColorMain3", "Main 3"),
             ("backgroundColorMain4", "Main 4"),
-            ("backgroundColorMainTransparent", "Main Transparent"),
+            # ("backgroundColorMainTransparent", "Main Transparent"),  # derived by qlementine
             ("backgroundColorWorkspace", "Workspace"),
             ("backgroundColorTabBar", "Tab Bar"),
         ],
@@ -70,7 +66,7 @@ _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
             ("shadowColor1", "Shadow 1"),
             ("shadowColor2", "Shadow 2"),
             ("shadowColor3", "Shadow 3"),
-            ("shadowColorTransparent", "Shadow Transparent"),
+            # ("shadowColorTransparent", "Shadow Transparent"),  # derived by qlementine
         ],
     ),
     (
@@ -80,7 +76,7 @@ _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
             ("semiTransparentColor2", "Level 2"),
             ("semiTransparentColor3", "Level 3"),
             ("semiTransparentColor4", "Level 4"),
-            ("semiTransparentColorTransparent", "Transparent"),
+            # ("semiTransparentColorTransparent", "Transparent"),  # derived by qlementine
         ],
     ),
 ]
@@ -92,7 +88,7 @@ _GEOMETRY_PROPS: list[tuple[str, list[tuple[str, str, str, int, int]]]] = [
         [
             ("borderRadius", "Border Radius", "float", 0, 30),
             ("checkBoxBorderRadius", "Checkbox Radius", "float", 0, 20),
-            ("menuItemBorderRadius", "Menu Item Radius", "float", 0, 20),
+            # ("menuItemBorderRadius", ...),  # not serialized by qlementine
             ("menuBarItemBorderRadius", "MenuBar Item Radius", "float", 0, 20),
             ("borderWidth", "Border Width", "int", 0, 10),
             ("focusBorderWidth", "Focus Border Width", "int", 0, 10),
@@ -153,9 +149,9 @@ _GEOMETRY_PROPS: list[tuple[str, list[tuple[str, str, str, int, int]]]] = [
         "Icon Sizes",
         [
             ("iconSize", "Default", "size", 4, 64),
-            ("iconSizeMedium", "Medium", "size", 4, 64),
-            ("iconSizeLarge", "Large", "size", 4, 64),
-            ("iconSizeExtraSmall", "Extra Small", "size", 4, 64),
+            # ("iconSizeMedium", ...),  # derived from iconSize
+            # ("iconSizeLarge", ...),  # derived from iconSize
+            # ("iconSizeExtraSmall", ...),  # derived from iconSize
         ],
     ),
     (
@@ -224,20 +220,11 @@ class Colors(QScrollArea):
             for section, attrs in _STANDALONE_COLORS:
                 for attr, label in attrs:
                     result.append((section, attr, label))
-            for section, base, has_trans in _STATEFUL_COLORS:
-                result.append((section, base, "Normal"))
-                if has_trans:
-                    result.append((section, f"{base}Transparent", "Transparent"))
-            for section, base in _STATUS_COLORS:
-                label = section.removeprefix("Status ")
-                result.append(("Status", base, label))
+            for section, base, label in _VARIANT_COLORS:
+                result.append((section, base, label))
         else:
-            suffix = state  # "Hovered", "Pressed", or "Disabled"
-            for section, base, _ in _STATEFUL_COLORS:
-                result.append((section, f"{base}{suffix}", suffix))
-            for section, base in _STATUS_COLORS:
-                label = section.removeprefix("Status ")
-                result.append(("Status", f"{base}{suffix}", label))
+            for section, base, label in _VARIANT_COLORS:
+                result.append((section, f"{base}{state}", label))
 
         return result
 

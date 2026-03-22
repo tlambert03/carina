@@ -2,7 +2,7 @@
 
 import sys
 
-from carina._editor import ThemeEditor
+from carina._theme_editor import ThemeEditor
 from carina._qt import QtWidgets as QtW
 from carina._qt.Qlementine import QlementineStyle
 from carina._qt.QtCore import Qt

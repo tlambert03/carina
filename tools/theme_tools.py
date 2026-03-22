@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from carina._editor import ThemeEditor
+from carina._theme_editor import ThemeEditor
 from carina._qt.Qlementine import (
     AutoIconColor,
     CommandLinkButton,
