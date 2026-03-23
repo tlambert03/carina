@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import math
 from collections.abc import Callable
+from functools import cache
 from pathlib import Path
 from typing import TypedDict
 
@@ -63,15 +64,19 @@ _light_gray_colors: dict[str, list[Color]] | None = None
 _dark_gray_colors: dict[str, list[Color]] | None = None
 
 
+@cache
+def _radix_scales() -> dict[str, list[str]]:
+    data_path = Path(__file__).parent / "_radix_scales.json"
+    return json.loads(data_path.read_bytes())
+
+
 def _ensure_scales() -> None:
     """Load vendored P3 color data and convert to OKLCH Color objects."""
     global _light_colors, _dark_colors, _light_gray_colors, _dark_gray_colors
     if _light_colors is not None:
         return
 
-    data_path = Path(__file__).parent / "_radix_scales.json"
-    with open(data_path) as f:
-        raw: dict[str, list[str]] = json.load(f)
+    raw = _radix_scales()
 
     _light_colors = {}
     _dark_colors = {}
