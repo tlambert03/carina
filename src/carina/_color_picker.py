@@ -115,7 +115,7 @@ class _SaturationValueArea(QWidget):
         p.end()
         self._cache = pm
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent) -> None:
         if self._cache is None or self._cache.size() != self.size():
             self._rebuild_cache()
 
@@ -151,7 +151,7 @@ class _SaturationValueArea(QWidget):
         p.drawEllipse(center, _HANDLE_RADIUS, _HANDLE_RADIUS)
         p.end()
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         self._cache = None
         super().resizeEvent(event)
 
@@ -166,11 +166,11 @@ class _SaturationValueArea(QWidget):
         self.update()
         self.colorChanged.emit(QColor.fromHsvF(self._hue / 360.0, self._sat, self._val))
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if event and event.button() == Qt.MouseButton.LeftButton:
             self._update_from_pos(event.pos().x(), event.pos().y())
 
-    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event and event.buttons() & Qt.MouseButton.LeftButton:
             self._update_from_pos(event.pos().x(), event.pos().y())
 
@@ -240,11 +240,11 @@ class _HueSlider(QWidget):
         self.update()
         self.hueChanged.emit(self._hue)
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if event and event.button() == Qt.MouseButton.LeftButton:
             self._update_from_x(event.pos().x())
 
-    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event and event.buttons() & Qt.MouseButton.LeftButton:
             self._update_from_x(event.pos().x())
 
@@ -309,7 +309,7 @@ class _EyeDropperButton(QWidget):
         p.drawPath(path)
         p.end()
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
 
@@ -453,11 +453,11 @@ class _LoupeOverlay(QWidget):
         p.drawText(label_rect, Qt.AlignmentFlag.AlignCenter, hex_text)
         p.end()
 
-    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         self._cursor_pos = QCursor.pos()
         self.update()
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if not (event and event.button() == Qt.MouseButton.LeftButton):
             return
         if not self._grab_image or not self._grab:
@@ -476,7 +476,7 @@ class _LoupeOverlay(QWidget):
         if event and event.key() == Qt.Key.Key_Escape:
             self.close()
             self.deleteLater()
-        else:
+        elif event:
             super().keyPressEvent(event)
 
 

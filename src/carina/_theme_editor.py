@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from carina._color_editor import ColorEditor
 from carina._qt.Qlementine import Theme
-from carina._qt.QtCore import QEvent, QJsonDocument, QSize, Signal
+from carina._qt.QtCore import QEvent, QJsonDocument, QObject, QSize, Signal
 from carina._qt.QtGui import QKeySequence
 from carina._qt.QtWidgets import (
     QApplication,
@@ -47,7 +47,7 @@ _VARIANT_COLORS: list[tuple[str, str, str]] = [
     ("Status", "statusColorWarning", "Warning"),
     ("Status", "statusColorError", "Error"),
     ("Status", "statusColorInfo", "Info"),
-    # ("Status", "statusColorForeground", "Foreground"),  # not serialized by qlementine toJson()
+    # ("Status", "statusColorForeground", "Foreground"),  # not serialized by qlementine
     # Border (~24)
     ("Border", "borderColor", "Border"),
 ]
@@ -61,7 +61,7 @@ _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
             ("backgroundColorMain2", "Main 2"),
             ("backgroundColorMain3", "Main 3"),
             ("backgroundColorMain4", "Main 4"),
-            # ("backgroundColorMainTransparent", "Main Transparent"),  # derived by qlementine
+            # ("backgroundColorMainTransparent", "Main Transparent"),  # derived
             ("backgroundColorWorkspace", "Workspace"),
             ("backgroundColorTabBar", "Tab Bar"),
         ],
@@ -73,7 +73,7 @@ _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
             ("semiTransparentColor2", "Level 2"),
             ("semiTransparentColor3", "Level 3"),
             ("semiTransparentColor4", "Level 4"),
-            # ("semiTransparentColorTransparent", "Transparent"),  # derived by qlementine
+            # ("semiTransparentColorTransparent", "Transparent"),  # derived
         ],
     ),
     (
@@ -82,7 +82,7 @@ _STANDALONE_COLORS: list[tuple[str, list[tuple[str, str]]]] = [
             ("shadowColor1", "Shadow 1"),
             ("shadowColor2", "Shadow 2"),
             ("shadowColor3", "Shadow 3"),
-            # ("shadowColorTransparent", "Shadow Transparent"),  # derived by qlementine
+            # ("shadowColorTransparent", "Shadow Transparent"),  # derived
         ],
     ),
     ("Focus", [("focusColor", "Focus")]),  # ~2 uses
@@ -156,9 +156,9 @@ _GEOMETRY_PROPS: list[tuple[str, list[tuple[str, str, str, int, int]]]] = [
         "Icon Sizes",
         [
             ("iconSize", "Default", "size", 4, 64),
-            # ("iconSizeMedium", ...),  # derived from iconSize
-            # ("iconSizeLarge", ...),  # derived from iconSize
-            # ("iconSizeExtraSmall", ...),  # derived from iconSize
+            # ("iconSizeMedium", ...),  # derived
+            # ("iconSizeLarge", ...),  # derived
+            # ("iconSizeExtraSmall", ...),  # derived
         ],
     ),
     (
@@ -401,14 +401,14 @@ class ThemeEditor(QWidget):
         if app is not None:
             app.installEventFilter(self)
 
-    def eventFilter(self, obj: object, event: QEvent) -> bool:
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.KeyPress:
             w = QApplication.focusWidget()
             if w is not None and self.isAncestorOf(w):
-                if event.matches(QKeySequence.StandardKey.Undo):  # type: ignore[union-attr]
+                if event.matches(QKeySequence.StandardKey.Undo):
                     self.undo()
                     return True
-                if event.matches(QKeySequence.StandardKey.Redo):  # type: ignore[union-attr]
+                if event.matches(QKeySequence.StandardKey.Redo):
                     self.redo()
                     return True
         return super().eventFilter(obj, event)
@@ -449,9 +449,8 @@ class ThemeEditor(QWidget):
 
     def setTheme(self, theme: Theme | ThemeDict) -> None:
         """Replace the current theme and refresh all editors."""
-        if isinstance(theme, dict):
+        if not isinstance(theme, Theme):
             theme = make_qlementine_theme(theme)
-
         self._theme = Theme(theme)
         for tab in self._tabs:
             tab.setTheme(self._theme)
