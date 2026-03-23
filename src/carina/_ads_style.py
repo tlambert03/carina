@@ -25,6 +25,7 @@ from carina._qt.Qlementine import (
     SelectionState,
 )
 from carina._qt.Qlementine import utils as qlem_utils
+from carina._qt.QtCore import Qt
 from carina._qt.QtGui import QColor, QPalette, QPen
 from carina._qt.QtWidgets import QScrollArea, QStyle, QStyleOptionToolButton, QWidget
 
@@ -44,6 +45,16 @@ ADS_DETACH = "detachGroupButton"
 
 # QtAds dynamic property names
 ADS_ACTIVE_TAB = "activeTab"
+
+# All QtAds button objectNames — used to strip QFocusFrame.
+_ADS_BUTTONS = {
+    ADS_TAB_CLOSE,
+    ADS_TABS_MENU,
+    ADS_AREA_CLOSE,
+    ADS_AUTO_HIDE,
+    ADS_DETACH,
+    "dockAreaMinimizeButton",
+}
 
 # Icon keys for QtAds buttons, resolved via pyconify at runtime.
 _ADS_ICON_MAP = {
@@ -100,21 +111,33 @@ class AdsAwareQlementineStyle(QlementineStyle):
     # ---- Widget polishing ----
 
     def polish(self, obj: Any) -> None:
-        result = super().polish(obj)
         if not isinstance(obj, QWidget):
-            return result
+            return super().polish(obj)
 
         name = obj.objectName()
+        if name in _ADS_BUTTONS:
+            # Skip super().polish() for QtAds buttons to prevent Qlementine
+            # from installing WidgetWithFocusFrameEventFilter on them.
+            # That filter creates a QFocusFrame and repositions it on every
+            # QEvent::Show via QFocusFrame::setWidget(), which calls mapTo().
+            # During QtAds dock moves the parent hierarchy is temporarily
+            # broken, producing "parent must be in parent hierarchy" warnings.
+            # These toolbar-style buttons don't need focus frames.
+            # Apply only the minimal styling these buttons need.
+            obj.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
+            obj.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, False)
+            name = obj.objectName()
+            # Set themed icons on QtAds buttons.
+            # AutoIconColor (set in __init__) ensures Qlementine
+            # re-colorizes them at paint time with the correct fg color.
+            if name in _ADS_ICON_MAP and hasattr(obj, "setIcon"):
+                obj.setIcon(self.makeThemedIcon(str(svg_path(_ADS_ICON_MAP[name]))))
+            # Flat close buttons so Qlementine skips the button bevel
+            if name == ADS_TAB_CLOSE and hasattr(obj, "setFlat"):
+                obj.setFlat(True)
+            return
 
-        # Set themed icons on QtAds buttons.
-        # AutoIconColor (set in __init__) ensures Qlementine
-        # re-colorizes them at paint time with the correct fg color.
-        if name in _ADS_ICON_MAP and hasattr(obj, "setIcon"):
-            obj.setIcon(self.makeThemedIcon(str(svg_path(_ADS_ICON_MAP[name]))))
-
-        # Flat close buttons so Qlementine skips the button bevel
-        if name == ADS_TAB_CLOSE and hasattr(obj, "setFlat"):
-            obj.setFlat(True)
+        result = super().polish(obj)
 
         # Set title bar background on intermediate widgets that would
         # otherwise auto-fill with palette(Window), covering the

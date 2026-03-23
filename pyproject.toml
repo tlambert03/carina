@@ -27,8 +27,8 @@ classifiers = [
 dependencies = ["pyconify>=0.2.1"]
 
 [project.optional-dependencies]
-pyqt6 = ["PyQt6-Qlementine"]
-pyside6 = ["PySide6-Qlementine"]
+pyqt6 = ["PyQt6-Qlementine >=1.4.3.0rc2", "PyQt6Ads>=4.5.0"]
+pyside6 = ["PySide6-Qlementine >=1.4.3.0rc2", "pyside6-qtads>=4.5.0"]
 
 [project.urls]
 homepage = "https://github.com/tlambert03/carina"
