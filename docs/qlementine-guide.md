@@ -1127,3 +1127,159 @@ palette text color if auto-colorization is active, and paints it centered.
 | Themed icon creation | Manual `QIcon::addPixmap()` for each mode | `makeThemedIcon()` / `makeThemedIconFromName()` auto-generate all modes |
 | Standard dialog icons | Platform-provided | Custom SVGs colorized with theme status colors |
 | Icon display widget | `QLabel` with pixmap | `IconWidget` with auto-colorization support |
+
+---
+
+## Qlementine Widgets
+
+Qlementine provides a set of custom widgets beyond what stock Qt offers. Some
+extend existing Qt widgets with additional functionality; others are entirely
+new. All are available via `from carina._qt import Qlementine`.
+
+### New Widgets (no stock Qt equivalent)
+
+#### AboutDialog
+
+A pre-built "About" dialog displaying application icon, name, version,
+description, website link, license, copyright, and social media links.
+Qt has no standard About dialog widget — applications typically hand-roll
+these. `AboutDialog` automatically pulls from `QApplication` metadata and
+provides a polished, consistent layout.
+
+#### AbstractItemListWidget
+
+Base class for item-list controls like `SegmentedControl` and `NavigationBar`.
+Manages a list of items (text + icon + optional badge), tracks
+current/hovered/pressed indices, provides animated selection transitions, and
+handles keyboard navigation. Not typically instantiated directly.
+
+#### ColorButton
+
+A square button that displays a color swatch and opens a `QColorDialog` on
+click. Supports RGB and RGBA modes. Qt has no equivalent — the closest is
+calling `QColorDialog.getColor()` manually and managing a preview yourself.
+
+#### ColorEditor
+
+A composite widget combining a `ColorButton` swatch with a hex `LineEdit`.
+Edits stay in sync: changing the swatch updates the text and vice versa.
+(There's currently in a bug in the LineEdit->ColorButton direction).
+Validates hex input and shows an error status on invalid values. Supports
+RGB/RGBA modes. No Qt equivalent exists.  See carina's own ColorEditor
+for a less buggy variant.
+
+#### Expander
+
+An animated collapsible container. Set a content widget, then toggle
+`expanded` to smoothly animate between collapsed and expanded states.
+Supports both vertical and horizontal orientations. Emits phase signals
+(`aboutToExpand`, `didExpand`, `aboutToShrink`, `didShrink`). Qt has no
+built-in expandable/collapsible widget.
+
+#### LoadingSpinner
+
+An animated circular spinner (12-segment style). Automatically starts/stops
+its timer when shown/hidden. Qt provides `QProgressBar` but has no spinner
+widget.
+
+#### NavigationBar
+
+An Android-style bottom navigation bar built on `AbstractItemListWidget`.
+Items are displayed horizontally with an animated underline indicator beneath
+the selected item. Items support icons and badges. No Qt equivalent.
+
+#### NotificationBadge
+
+A small colored badge that attaches to another widget (via `setWidget`). It
+tracks the target widget's position and parent changes automatically.
+Customizable text, colors, padding, and relative position. Transparent to
+mouse events. No Qt equivalent.
+
+#### Popover
+
+A macOS-style popover with an arrow pointing to an anchor widget. Features
+smart positioning (left/top/right/bottom with fallback), configurable
+alignment, drop shadow, border, opacity animation, and optional manual
+positioning. Set any widget as content via `setContentWidget`. No Qt
+equivalent — `QToolTip` is text-only and non-interactive.
+
+#### PopoverButton
+
+A button that opens a `Popover` when clicked. Painted like a `QComboBox` with
+a dropdown arrow, but instead of a fixed item list it shows arbitrary popover
+content. Manages the internal `Popover` lifecycle automatically.
+
+#### SegmentedControl
+
+A macOS-style segmented control built on `AbstractItemListWidget`. Items are
+displayed as horizontal segments with animated selection. Uses primary color
+for the selected segment and neutral colors for others. The closest Qt
+equivalent is `QTabBar`, but the visual style and behavior differ
+significantly.
+
+#### StatusBadgeWidget
+
+A small widget that displays a colored status icon (Info, Success, Warning,
+Error) in Small or Medium size. The color comes from the Qlementine theme's
+status colors. No Qt equivalent.
+
+#### Switch
+
+An iOS/Android-style toggle switch with animated handle and background
+transitions. Supports optional tristate mode (on/off/indeterminate) and
+draws accessibility symbols (check/cross/dash) on the handle. Qt provides
+`QCheckBox` but has no switch-style toggle.
+
+### Enhanced Qt Widgets
+
+#### ActionButton
+
+A `QPushButton` that binds to a `QAction`. Text, icon, enabled, checkable,
+and checked state stay in sync with the action automatically. Qt's
+`QToolBar` does this internally, but there is no standalone equivalent for
+use outside toolbars. Focus policy defaults to `NoFocus`.
+
+#### CommandLinkButton
+
+Wraps `QCommandLinkButton` to fix a Qt issue where the stock widget forces a
+Vista-style minimum size regardless of content. This version calculates
+`sizeHint` from actual content, so command link buttons size correctly in
+non-Windows contexts.
+
+#### IconWidget
+
+A lightweight `QWidget` that displays a `QIcon` at a configurable size.
+Simpler and more focused than using a `QLabel` with a pixmap. Automatically
+applies Qlementine's theme-aware icon colorization.
+
+#### Label
+
+Extends `QLabel` with a `TextRole` property (H1–H5, Caption, etc.).
+The role automatically applies the correct theme font and color — no manual
+stylesheet or font configuration needed. Updates reactively when the
+application palette changes.
+
+#### LineEdit
+
+Extends `QLineEdit` with a leading icon, a `Status` property
+(Default/Success/Warning/Error for colored border feedback), and a monospace
+font toggle. The icon is drawn inside the edit area with proper margins.
+
+#### Menu
+
+Extends `QMenu` with predicate-based `enabled` and `visible` properties.
+Call `updateProps()` to re-evaluate predicates before showing, enabling
+dynamic menu state based on application context.
+
+#### PlainTextEdit
+
+Extends `QPlainTextEdit` with a `Status` property (same as `LineEdit`) and a
+monospace font toggle. Size hints use Qlementine theme metrics for
+consistent default sizing.
+
+#### RoundedFocusFrame
+
+Extends `QFocusFrame` to support rounded corners matching the Qlementine
+style. Stock `QFocusFrame` draws only rectangular outlines. This is
+primarily an internal implementation detail of the style, but can be used
+directly if needed.
