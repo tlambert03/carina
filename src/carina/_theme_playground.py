@@ -9,10 +9,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from carina._color_picker import ColorPicker
 from carina._qlementine_mapper import generate_qlementine_theme
 from carina._qt.Qlementine import Popover
-from carina._qt.QtCore import QMargins, QRectF, Qt, Signal
+from carina._qt.QtCore import QRectF, Qt, Signal
 from carina._qt.QtGui import (
     QAction,
     QBrush,
@@ -91,14 +90,6 @@ GRAY_PRESETS: list[tuple[str, str]] = [
     ("Sand", "#8d8985"),
 ]
 
-_DARK_BACKGROUNDS: dict[str, str] = {
-    "Gray": "#111111",
-    "Mauve": "#121113",
-    "Slate": "#111113",
-    "Sage": "#101211",
-    "Olive": "#111210",
-    "Sand": "#111110",
-}
 
 RADIUS_PRESETS: list[tuple[str, float]] = [
     ("None", 0.0),
@@ -187,73 +178,6 @@ class _ColorSwatch(QWidget):
         p.end()
 
 
-class _CustomSwatch(_ColorSwatch):
-    """Swatch that shows a '+' and opens a ColorPicker popover on click."""
-
-    colorPicked = Signal(str)  # hex
-
-    def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__("#888888", parent)
-        self._custom_color: str | None = None
-        self._popover: Popover | None = None
-
-    def setCustomColor(self, hex_color: str) -> None:
-        self._custom_color = hex_color
-        self._color = QColor(hex_color)
-        self._hex = hex_color
-        self.update()
-
-    def mouseReleaseEvent(self, event: object) -> None:
-        if self._popover and self._popover.isOpened():
-            self._popover.closePopover()
-            return
-
-        # Select this swatch first so the grid knows it's active
-        self.clicked.emit()
-
-        initial = (
-            QColor(self._custom_color) if self._custom_color else QColor("#888888")
-        )
-        picker = ColorPicker(initial)
-        picker.colorChanged.connect(self._on_picker_color)
-
-        self._popover = Popover(self)
-        self._popover.setAnchorWidget(self)
-        self._popover.setVerticalSpacing(6)
-        self._popover.setContentWidget(picker)
-        self._popover.setPadding(QMargins(0, 0, 0, 0))
-        self._popover.setPreferredPosition(Popover.Position.Top)
-        self._popover.setPreferredAlignment(Popover.Alignment.Center)
-        self._popover.openPopover()
-
-    def _on_picker_color(self, color: QColor) -> None:
-        hex_str = color.name()
-        self.setCustomColor(hex_str)
-        self.colorPicked.emit(hex_str)
-
-    def paintEvent(self, event: object) -> None:
-        if self._custom_color:
-            super().paintEvent(event)
-            return
-
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        cx = self.width() / 2
-        cy = self.height() / 2
-        r = _SWATCH_R
-
-        # Dashed circle
-        pen = QPen(QColor(160, 160, 160), 1.5, Qt.PenStyle.DashLine)
-        p.setPen(pen)
-        p.setBrush(Qt.BrushStyle.NoBrush)
-        p.drawEllipse(QRectF(cx - r, cy - r, 2 * r, 2 * r))
-
-        # Plus sign
-        p.setPen(QPen(QColor(160, 160, 160), 1.5))
-        half = 5
-        p.drawLine(int(cx - half), int(cy), int(cx + half), int(cy))
-        p.drawLine(int(cx), int(cy - half), int(cx), int(cy + half))
-        p.end()
 
 
 # ---------------------------------------------------------------------------
@@ -270,13 +194,11 @@ class _SwatchGrid(QWidget):
         self,
         presets: list[tuple[str, str]],
         columns: int = _GRID_COLS,
-        allow_custom: bool = False,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._swatches: list[_ColorSwatch] = []
         self._selected_index: int = -1
-        self._custom: _CustomSwatch | None = None
 
         grid = QGridLayout(self)
         grid.setContentsMargins(0, 0, 0, 0)
@@ -290,37 +212,16 @@ class _SwatchGrid(QWidget):
             grid.addWidget(sw, row, col)
             self._swatches.append(sw)
 
-        if allow_custom:
-            csw = _CustomSwatch(self)
-            csw.setToolTip("Custom")
-            idx = len(presets)
-            csw.clicked.connect(lambda: self._on_swatch_clicked(idx))
-            csw.colorPicked.connect(self._on_custom_picked)
-            row, col = divmod(idx, columns)
-            grid.addWidget(csw, row, col)
-            self._swatches.append(csw)
-            self._custom = csw
-
     def _on_swatch_clicked(self, index: int) -> None:
         if 0 <= self._selected_index < len(self._swatches):
             self._swatches[self._selected_index].setSelected(False)
         self._selected_index = index
         sw = self._swatches[index]
         sw.setSelected(True)
-        name = sw.toolTip() or "Custom"
-        self.selectionChanged.emit(name, sw.hex())
-
-    def _on_custom_picked(self, hex_color: str) -> None:
-        """Live-update theme as the user drags in the color picker."""
-        self.selectionChanged.emit("Custom", hex_color)
+        self.selectionChanged.emit(sw.toolTip(), sw.hex())
 
     def setCurrentIndex(self, index: int) -> None:
         self._on_swatch_clicked(index)
-
-    def selectedHex(self) -> str:
-        if 0 <= self._selected_index < len(self._swatches):
-            return self._swatches[self._selected_index].hex()
-        return ""
 
 
 # ---------------------------------------------------------------------------
@@ -453,10 +354,9 @@ class ThemePanel(QScrollArea):
         lay.addWidget(self._section_label(
             "Accent color",
             "Your brand color. Used for primary buttons, active states, "
-            "links, and focus rings. A full 12-step scale is generated "
-            "from this single color using the Radix color algorithm.",
+            "links, and focus rings. Uses a pre-built Radix 12-step scale.",
         ))
-        self._accent_grid = _SwatchGrid(ACCENT_PRESETS, _GRID_COLS, allow_custom=True)
+        self._accent_grid = _SwatchGrid(ACCENT_PRESETS, _GRID_COLS)
         self._accent_grid.selectionChanged.connect(self._on_accent_changed)
         lay.addWidget(self._accent_grid)
 
@@ -465,42 +365,11 @@ class ThemePanel(QScrollArea):
             "Gray color",
             "Tints the neutral palette (backgrounds, borders, text). "
             "Pure Gray is neutral; Slate adds a cool blue tint, "
-            "Mauve a purple tint, etc. Each generates a matching "
-            "12-step gray scale.",
+            "Mauve a purple tint, etc.",
         ))
-        self._gray_grid = _SwatchGrid(
-            GRAY_PRESETS, len(GRAY_PRESETS), allow_custom=True
-        )
+        self._gray_grid = _SwatchGrid(GRAY_PRESETS, len(GRAY_PRESETS))
         self._gray_grid.selectionChanged.connect(self._on_gray_changed)
         lay.addWidget(self._gray_grid)
-
-        # ---------- background ----------
-        lay.addWidget(self._section_label(
-            "Background",
-            "The page/window background color. The Radix algorithm "
-            "transposes the entire color scale so its lightest (or "
-            "darkest) step matches this value. In Auto mode, white "
-            "is used for light themes and the gray scale's natural "
-            "dark base for dark themes.",
-        ))
-        bg_row = QHBoxLayout()
-        bg_row.setContentsMargins(0, 0, 0, 0)
-        bg_row.setSpacing(6)
-        self._bg_swatch = _CustomSwatch()
-        self._bg_swatch.setToolTip("Background")
-        self._bg_swatch.colorPicked.connect(self._on_bg_picked)
-        bg_row.addWidget(self._bg_swatch)
-        self._bg_label = QLabel("#ffffff")
-        bg_row.addWidget(self._bg_label)
-        self._bg_auto_btn = QPushButton("Auto")
-        self._bg_auto_btn.setCheckable(True)
-        self._bg_auto_btn.setChecked(True)
-        self._bg_auto_btn.setToolTip("Derive background from appearance + gray")
-        self._bg_auto_btn.setMaximumWidth(60)
-        self._bg_auto_btn.clicked.connect(self._on_bg_auto_toggled)
-        bg_row.addWidget(self._bg_auto_btn)
-        bg_row.addStretch()
-        lay.addLayout(bg_row)
 
         # ---------- appearance ----------
         lay.addWidget(self._section_label("Appearance"))
@@ -536,13 +405,9 @@ class ThemePanel(QScrollArea):
         self.setWidget(content)
 
         # ---------- defaults ----------
-        self._accent_name = "Blue"
-        self._accent_hex = "#0090ff"
-        self._gray_name = "Slate"
-        self._gray_hex = "#8b8d98"
+        self._accent_name = "blue"
+        self._gray_name = "slate"
         self._appearance_mode = "light"
-        self._bg_auto = True  # auto-derive background from appearance + gray
-        self._bg_hex = "#ffffff"
         self._radius = 6.0
         self._scaling_factor = 1.0
 
@@ -555,7 +420,6 @@ class ThemePanel(QScrollArea):
             (i for i, (n, _) in enumerate(GRAY_PRESETS) if n == "Slate"), 2
         )
         self._gray_grid.setCurrentIndex(slate_idx)
-        self._update_auto_bg()
         self._appearance.setCurrentIndex(0)
         self._select_radius(2)  # Medium
         self._scaling.setCurrentIndex(2)  # 100%
@@ -620,47 +484,13 @@ class ThemePanel(QScrollArea):
         if not use_default:
             self._emit_theme()
 
-    def _on_accent_changed(self, _name: str, hex_color: str) -> None:
-        self._accent_hex = hex_color
+    def _on_accent_changed(self, name: str, _hex_color: str) -> None:
+        self._accent_name = name.lower()
         self._emit_theme()
 
-    def _on_gray_changed(self, name: str, hex_color: str) -> None:
-        self._gray_hex = hex_color
-        # Determine gray name for dark background lookup
-        for preset_name, h in GRAY_PRESETS:
-            if h == hex_color:
-                self._gray_name = preset_name
-                break
-        else:
-            self._gray_name = "Gray"
-        if self._bg_auto:
-            self._update_auto_bg()
+    def _on_gray_changed(self, name: str, _hex_color: str) -> None:
+        self._gray_name = name.lower()
         self._emit_theme()
-
-    def _on_bg_picked(self, hex_color: str) -> None:
-        self._bg_auto = False
-        self._bg_auto_btn.setChecked(False)
-        self._bg_hex = hex_color
-        self._bg_label.setText(hex_color)
-        self._emit_theme()
-
-    def _on_bg_auto_toggled(self) -> None:
-        self._bg_auto = self._bg_auto_btn.isChecked()
-        if self._bg_auto:
-            self._update_auto_bg()
-        self._emit_theme()
-
-    def _auto_background(self) -> str:
-        """Compute the default background from appearance + gray."""
-        if self._appearance_mode == "dark":
-            return _DARK_BACKGROUNDS.get(self._gray_name, "#111113")
-        return "#ffffff"
-
-    def _update_auto_bg(self) -> None:
-        """Refresh background swatch and label from auto value."""
-        self._bg_hex = self._auto_background()
-        self._bg_swatch.setCustomColor(self._bg_hex)
-        self._bg_label.setText(self._bg_hex)
 
     def _on_any_change(self) -> None:
         app_idx = next(
@@ -675,8 +505,6 @@ class ThemePanel(QScrollArea):
         )
         self._scaling_factor = SCALING_PRESETS[scale_idx][1]
 
-        if self._bg_auto:
-            self._update_auto_bg()
         self._emit_theme()
 
     def _emit_theme(self) -> None:
@@ -685,12 +513,9 @@ class ThemePanel(QScrollArea):
             self._default_btn.setChecked(False)
             self.useDefaultChanged.emit(False)
 
-        background = self._bg_hex
-
         theme = generate_qlementine_theme(
-            accent=self._accent_hex,
-            gray=self._gray_hex,
-            background=background,
+            accent=self._accent_name,
+            gray=self._gray_name,
             appearance=self._appearance_mode,
             name=f"{'Dark' if self._appearance_mode == 'dark' else 'Light'} Custom",
         )
@@ -717,9 +542,8 @@ class ThemePanel(QScrollArea):
         from carina._theme import _to_camel_case_dict
 
         theme = generate_qlementine_theme(
-            accent=self._accent_hex,
-            gray=self._gray_hex,
-            background=self._bg_hex,
+            accent=self._accent_name,
+            gray=self._gray_name,
             appearance=self._appearance_mode,
         )
         theme["border_radius"] = self._radius

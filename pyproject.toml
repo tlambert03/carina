@@ -24,7 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Typing :: Typed",
 ]
-dependencies = ["coloraide>=4"]
+dependencies = []
 
 [project.optional-dependencies]
 pyqt6 = ["PyQt6-Qlementine"]

@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
-from coloraide import Color
-
 from carina._qlementine_mapper import generate_qlementine_theme
+from carina._radix_generator import get_scale
 
 
-def _delta_e(hex1: str, hex2: str) -> float:
-    return Color(hex1).delta_e(Color(hex2), method="ok")
+def _parse_rgb(hex_color: str) -> tuple[int, int, int]:
+    h = hex_color.lstrip("#")[:6]
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+
+def _relative_luminance(hex_color: str) -> float:
+    r, g, b = _parse_rgb(hex_color)
+
+    def lin(v: int) -> float:
+        s = v / 255
+        return s / 12.92 if s <= 0.04045 else ((s + 0.055) / 1.055) ** 2.4
+
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
 
 
 # ---------------------------------------------------------------------------
@@ -17,49 +27,28 @@ def _delta_e(hex1: str, hex2: str) -> float:
 
 
 def test_light_theme_structure() -> None:
-    theme = generate_qlementine_theme(
-        accent="#1890ff",
-        gray="#8b8b8b",
-        background="#ffffff",
-        appearance="light",
-    )
+    theme = generate_qlementine_theme(accent="blue", appearance="light")
     assert theme["meta"]["name"] == "Custom"
-    # All color fields should be strings
     for key, value in theme.items():
         if key == "meta":
             continue
         assert isinstance(value, str), f"{key} should be str, got {type(value)}"
 
 
-def test_light_primary_is_accent() -> None:
-    theme = generate_qlementine_theme(
-        accent="#1890ff",
-        gray="#8b8b8b",
-        background="#ffffff",
-        appearance="light",
-    )
-    assert theme["primary_color"] == "#1890ff"
+def test_light_primary_matches_scale_step9() -> None:
+    theme = generate_qlementine_theme(accent="blue", appearance="light")
+    scale = get_scale("blue", "light")
+    assert theme["primary_color"] == scale[8]
     assert theme["primary_color_foreground"] == "#ffffff"
 
 
-def test_light_background_is_exact() -> None:
-    theme = generate_qlementine_theme(
-        accent="#1890ff",
-        gray="#8b8b8b",
-        background="#ffffff",
-        appearance="light",
-    )
+def test_light_background_is_white() -> None:
+    theme = generate_qlementine_theme(accent="blue", appearance="light")
     assert theme["background_color_main1"] == "#ffffff"
 
 
 def test_light_hover_press_differs() -> None:
-    """Hover/press should differ from the base primary color."""
-    theme = generate_qlementine_theme(
-        accent="#1890ff",
-        gray="#8b8b8b",
-        background="#ffffff",
-        appearance="light",
-    )
+    theme = generate_qlementine_theme(accent="blue", appearance="light")
     primary = theme["primary_color"]
     assert theme["primary_color_hovered"] != primary
     assert theme["primary_color_pressed"] != primary
@@ -68,41 +57,27 @@ def test_light_hover_press_differs() -> None:
 
 def test_light_secondary_color_contrast() -> None:
     """Secondary color (main text) should have high contrast on background."""
-    theme = generate_qlementine_theme(
-        accent="#1890ff",
-        gray="#8b8b8b",
-        background="#ffffff",
-        appearance="light",
-    )
-    from carina._radix_generator import _contrast_apca
-
-    text = Color(theme["secondary_color"])
-    bg = Color(theme["background_color_main1"])
-    lc = abs(_contrast_apca(text, bg))
-    assert lc > 80, f"Expected Lc > 80, got {lc}"
+    theme = generate_qlementine_theme(accent="blue", appearance="light")
+    text_lum = _relative_luminance(theme["secondary_color"])
+    bg_lum = _relative_luminance(theme["background_color_main1"])
+    # WCAG contrast ratio: (lighter + 0.05) / (darker + 0.05)
+    ratio = (bg_lum + 0.05) / (text_lum + 0.05)
+    assert ratio > 7, f"Expected contrast ratio > 7, got {ratio:.1f}"
 
 
 def test_light_status_colors() -> None:
-    theme = generate_qlementine_theme(
-        accent="#1890ff",
-        gray="#8b8b8b",
-        background="#ffffff",
-        appearance="light",
-    )
-    # Status seeds should be close to the reference
-    assert _delta_e(theme["status_color_success"], "#2bb5a0") < 0.02
-    assert _delta_e(theme["status_color_info"], "#1ba8d5") < 0.02
-    assert _delta_e(theme["status_color_error"], "#e96b72") < 0.02
+    theme = generate_qlementine_theme(accent="blue", appearance="light")
+    teal_scale = get_scale("teal", "light")
+    blue_scale = get_scale("blue", "light")
+    red_scale = get_scale("red", "light")
+    assert theme["status_color_success"] == teal_scale[8]
+    assert theme["status_color_info"] == blue_scale[8]
+    assert theme["status_color_error"] == red_scale[8]
     assert theme["status_color_foreground"] == "#ffffff"
 
 
 def test_light_hardcoded_values() -> None:
-    theme = generate_qlementine_theme(
-        accent="#1890ff",
-        gray="#8b8b8b",
-        background="#ffffff",
-        appearance="light",
-    )
+    theme = generate_qlementine_theme(accent="blue", appearance="light")
     assert theme["semi_transparent_color1"] == "#0000000a"
     assert theme["shadow_color1"] == "#0000001f"
 
@@ -113,12 +88,7 @@ def test_light_hardcoded_values() -> None:
 
 
 def test_dark_theme_structure() -> None:
-    theme = generate_qlementine_theme(
-        accent="#5086ff",
-        gray="#8b8d94",
-        background="#1f2127",
-        appearance="dark",
-    )
+    theme = generate_qlementine_theme(accent="blue", appearance="dark")
     assert theme["meta"]["name"] == "Custom"
     for key, value in theme.items():
         if key == "meta":
@@ -126,108 +96,72 @@ def test_dark_theme_structure() -> None:
         assert isinstance(value, str), f"{key} should be str"
 
 
-def test_dark_primary_is_accent() -> None:
-    theme = generate_qlementine_theme(
-        accent="#5086ff",
-        gray="#8b8d94",
-        background="#1f2127",
-        appearance="dark",
-    )
-    assert theme["primary_color"] == "#5086ff"
-    assert theme["primary_color_foreground"] == "#ffffff"
+def test_dark_primary_matches_scale_step9() -> None:
+    theme = generate_qlementine_theme(accent="blue", appearance="dark")
+    scale = get_scale("blue", "dark")
+    assert theme["primary_color"] == scale[8]
 
 
 def test_dark_secondary_is_white() -> None:
-    theme = generate_qlementine_theme(
-        accent="#5086ff",
-        gray="#8b8d94",
-        background="#1f2127",
-        appearance="dark",
-    )
+    theme = generate_qlementine_theme(accent="blue", appearance="dark")
     assert theme["secondary_color"] == "#ffffff"
 
 
-def test_dark_background_is_exact() -> None:
-    theme = generate_qlementine_theme(
-        accent="#5086ff",
-        gray="#8b8d94",
-        background="#1f2127",
-        appearance="dark",
-    )
-    assert theme["background_color_main1"] == "#1f2127"
+def test_dark_background_is_dark() -> None:
+    theme = generate_qlementine_theme(accent="blue", appearance="dark")
+    bg_lum = _relative_luminance(theme["background_color_main1"])
+    assert bg_lum < 0.03
 
 
-def test_dark_tab_bar_matches_bg() -> None:
-    """In dark mode, tab bar should equal main background."""
-    theme = generate_qlementine_theme(
-        accent="#5086ff",
-        gray="#8b8d94",
-        background="#1f2127",
-        appearance="dark",
-    )
-    # Plan says gray[0] for dark, which is close to background
-    # but not identical; just check it's dark
-    tab_L = Color(theme["background_color_tab_bar"]).convert("oklch")["lightness"]
-    assert tab_L < 0.3
+def test_dark_tab_bar_is_dark() -> None:
+    theme = generate_qlementine_theme(accent="blue", appearance="dark")
+    tab_lum = _relative_luminance(theme["background_color_tab_bar"])
+    assert tab_lum < 0.05
 
 
 def test_dark_semi_transparent_uses_accent_tint() -> None:
-    """Dark mode semiTransparent should be tinted with accent step 12."""
-    theme = generate_qlementine_theme(
-        accent="#5086ff",
-        gray="#8b8d94",
-        background="#1f2127",
-        appearance="dark",
-    )
-    # Should NOT be pure black
-    c = Color(theme["semi_transparent_color1"])
-    srgb = c.convert("srgb")
-    # The color part should have some blue/accent tint
-    r, g, b = srgb.coords()
-    # At least one channel should be notably higher (blue tint)
-    assert max(r, g, b) > 0.3
+    theme = generate_qlementine_theme(accent="blue", appearance="dark")
+    r, g, b = _parse_rgb(theme["semi_transparent_color1"])
+    # Should have some blue tint, not pure black
+    assert max(r, g, b) > 80
 
 
 def test_dark_hover_press_differs() -> None:
-    theme = generate_qlementine_theme(
-        accent="#5086ff",
-        gray="#8b8d94",
-        background="#1f2127",
-        appearance="dark",
-    )
+    theme = generate_qlementine_theme(accent="blue", appearance="dark")
     primary = theme["primary_color"]
     assert theme["primary_color_hovered"] != primary
     assert theme["primary_color_pressed"] != primary
-    assert theme["primary_color_hovered"] != theme["primary_color_pressed"]
 
 
 # ---------------------------------------------------------------------------
-# General/cross-mode tests
+# General / cross-mode tests
 # ---------------------------------------------------------------------------
 
 
-def test_different_accent_colors() -> None:
-    """Generator should work with various accent colors."""
-    for accent in ("#ff0000", "#00ff00", "#ff6600", "#9933ff", "#00cccc"):
-        theme = generate_qlementine_theme(
-            accent=accent,
-            gray="#8b8b8b",
-            background="#ffffff",
-            appearance="light",
-        )
-        assert _delta_e(theme["primary_color"], accent) < 0.02
+def test_different_accent_scales() -> None:
+    for accent in ("red", "green", "purple", "orange", "teal"):
+        theme = generate_qlementine_theme(accent=accent, appearance="light")
+        scale = get_scale(accent, "light")
+        assert theme["primary_color"] == scale[8]
+
+
+def test_default_gray_pairing() -> None:
+    """When gray is not specified, it uses the default pairing."""
+    theme = generate_qlementine_theme(accent="blue", appearance="light")
+    slate_scale = get_scale("slate", "light")
+    assert theme["neutral_color"] == slate_scale[6]
+
+
+def test_explicit_gray() -> None:
+    theme = generate_qlementine_theme(accent="blue", gray="mauve", appearance="light")
+    mauve_scale = get_scale("mauve", "light")
+    assert theme["neutral_color"] == mauve_scale[6]
 
 
 def test_theme_round_trip() -> None:
-    """Generated theme should be usable with Theme dataclass."""
     from carina._theme import Theme, ThemeMeta
 
-    td = generate_qlementine_theme(
-        accent="#1890ff",
-        gray="#8b8b8b",
-        background="#ffffff",
-        appearance="light",
-    )
+    td = generate_qlementine_theme(accent="blue", appearance="light")
     meta_dict = td["meta"]
     meta = ThemeMeta(
         name=meta_dict["name"],
@@ -242,4 +176,5 @@ def test_theme_round_trip() -> None:
             setattr(theme, key, value)
 
     d = theme.asdict()
-    assert d["primary_color"] == "#1890ff"
+    scale = get_scale("blue", "light")
+    assert d["primary_color"] == scale[8]

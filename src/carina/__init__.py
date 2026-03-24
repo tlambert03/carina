@@ -13,18 +13,18 @@ __all__ = [
     "ThemeMeta",
     "ThemePlayground",
     "generate_qlementine_theme",
-    "generate_radix_colors",
+    "get_scale",
     "make_qlementine_theme",
+    "scale_names",
 ]
 
 if TYPE_CHECKING:
-    # only to be used for type checking
     from carina._theme import ThemeDict as ThemeDict
     from carina._theme import ThemeMetaDict as ThemeMetaDict
     from carina._theme_playground import ThemePlayground as ThemePlayground
 
 from carina._qlementine_mapper import generate_qlementine_theme
-from carina._radix_generator import generate_radix_colors
+from carina._radix_generator import get_scale, scale_names
 from carina._theme import Theme, ThemeMeta, make_qlementine_theme
 
 

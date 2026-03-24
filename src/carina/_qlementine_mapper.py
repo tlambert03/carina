@@ -1,29 +1,29 @@
-"""Map Radix color generation output to a Qlementine ThemeDict."""
+"""Map Radix 12-step color scales to a Qlementine ThemeDict."""
 
 from __future__ import annotations
 
-import math
 from typing import TYPE_CHECKING
 
-from coloraide import Color
-
 from carina._radix_generator import (
-    RadixColorOutput,
-    generate_radix_colors,
+    DARK_BACKGROUNDS,
+    GRAY_FOR_SCALE,
+    LIGHT_BACKGROUND,
+    get_accent_contrast,
+    get_scale,
 )
 
 if TYPE_CHECKING:
     from carina._theme import ThemeDict
 
 # ---------------------------------------------------------------------------
-# Status color seeds (fixed accent inputs for the 4 status groups)
+# Status scale names (fixed Radix scales for the 4 status groups)
 # ---------------------------------------------------------------------------
 
-STATUS_SEEDS: dict[str, str] = {
-    "success": "#2bb5a0",
-    "info": "#1ba8d5",
-    "warning": "#fbc064",
-    "error": "#e96b72",
+STATUS_SCALES: dict[str, str] = {
+    "success": "teal",
+    "info": "blue",
+    "warning": "amber",
+    "error": "red",
 }
 
 
@@ -34,10 +34,9 @@ STATUS_SEEDS: dict[str, str] = {
 
 def _hex_with_alpha(hex_color: str, alpha: float) -> str:
     """Apply alpha (0-1) to a #rrggbb hex color, returning #rrggbbaa."""
-    c = Color(hex_color).convert("srgb")
-    c.set("alpha", alpha)
-    return c.clip().to_string(hex=True)
-
+    hex_color = hex_color.lstrip("#")
+    aa = f"{round(alpha * 255):02x}"
+    return f"#{hex_color[:6]}{aa}"
 
 
 # ---------------------------------------------------------------------------
@@ -47,23 +46,21 @@ def _hex_with_alpha(hex_color: str, alpha: float) -> str:
 
 def generate_qlementine_theme(
     accent: str,
-    gray: str,
-    background: str,
-    appearance: str,
+    gray: str | None = None,
+    appearance: str = "light",
     name: str = "Custom",
     author: str = "Generated",
     version: str = "1.0",
 ) -> ThemeDict:
-    """Generate a complete Qlementine theme from 3 color inputs + appearance.
+    """Generate a Qlementine theme from named Radix scales.
 
     Parameters
     ----------
     accent : str
-        Hex color for the accent/brand color (e.g. "#1890ff").
-    gray : str
-        Hex color for the gray tint base (e.g. "#8b8d94").
-    background : str
-        Hex color for the page background (e.g. "#ffffff").
+        Radix chromatic scale name (e.g. "blue", "crimson").
+    gray : str, optional
+        Radix gray scale name (e.g. "slate", "mauve"). If not provided,
+        uses the default gray pairing for the accent.
     appearance : str
         "light" or "dark".
     name : str
@@ -73,28 +70,19 @@ def generate_qlementine_theme(
     version : str
         Theme version string.
     """
+    if gray is None:
+        gray = GRAY_FOR_SCALE.get(accent, "gray")
+
     is_dark = appearance == "dark"
 
-    # --- Generate main scales ---
-    main = generate_radix_colors(accent, gray, background, appearance)
-    acc = main["accentScale"]  # 12 sRGB hex values, 0-indexed
-    gry = main["grayScale"]
-    gry_a = main["grayScaleAlpha"]
-    contrast = main["accentContrast"]
-    bg_hex = main["background"]
+    # --- Look up scales ---
+    acc = get_scale(accent, appearance)
+    gry = get_scale(gray, appearance)
+    contrast = get_accent_contrast(accent, appearance)
+    bg_hex = DARK_BACKGROUNDS.get(gray, "#111111") if is_dark else LIGHT_BACKGROUND
 
-    # Gray hue for derivations
-    gray_oklch = Color(gry[8]).convert("oklch")
-    gray_hue = gray_oklch["hue"]
-    if math.isnan(gray_hue):
-        gray_hue = 0.0
-
-    # --- Generate status scales ---
-    status_scales: dict[str, RadixColorOutput] = {}
-    for status_name, seed in STATUS_SEEDS.items():
-        status_scales[status_name] = generate_radix_colors(
-            accent=seed, gray=gray, background=background, appearance=appearance
-        )
+    # Alpha variants of gray for semi-transparent uses
+    gry_a = [_hex_with_alpha(c, 0.5) for c in gry]
 
     # --- Build the theme dict ---
     theme: ThemeDict = {"meta": {"name": name, "version": version, "author": author}}
@@ -102,11 +90,10 @@ def generate_qlementine_theme(
     # =====================================================================
     # Background colors (from gray scale)
     # =====================================================================
-    theme["background_color_main1"] = bg_hex  # QPalette::Base (item views)
-    theme["background_color_main2"] = bg_hex  # QPalette::Window — match user bg
+    theme["background_color_main1"] = bg_hex
+    theme["background_color_main2"] = bg_hex
     theme["background_color_main3"] = gry[1]
     theme["background_color_main4"] = gry[1]
-    # Workspace: darkest area (MDI background, external edges)
     theme["background_color_workspace"] = bg_hex if is_dark else gry[7]
     theme["background_color_tab_bar"] = gry[2] if not is_dark else gry[1]
 
@@ -126,10 +113,10 @@ def generate_qlementine_theme(
     # =====================================================================
     # Primary colors (from accent scale)
     # =====================================================================
-    theme["primary_color"] = acc[8]       # Radix step 9: solid accent
-    theme["primary_color_hovered"] = acc[9]  # Radix step 10: hover on solid
-    theme["primary_color_pressed"] = acc[10]  # Radix step 11: pressed
-    theme["primary_color_disabled"] = acc[3]  # Radix step 4: subtle disabled
+    theme["primary_color"] = acc[8]
+    theme["primary_color_hovered"] = acc[9]
+    theme["primary_color_pressed"] = acc[10]
+    theme["primary_color_disabled"] = acc[3]
 
     # Primary foreground
     theme["primary_color_foreground"] = contrast
@@ -159,9 +146,9 @@ def generate_qlementine_theme(
         theme["secondary_color_pressed"] = gry[11]
         theme["secondary_color_disabled"] = _hex_with_alpha("#ffffff", 0.20)
     else:
-        theme["secondary_color"] = gry[11]       # Radix step 12: high-contrast text
-        theme["secondary_color_hovered"] = gry[10]  # Radix step 11: slightly lighter
-        theme["secondary_color_pressed"] = gry[9]   # Radix step 10
+        theme["secondary_color"] = gry[11]
+        theme["secondary_color_hovered"] = gry[10]
+        theme["secondary_color_pressed"] = gry[9]
         theme["secondary_color_disabled"] = gry[5]
 
     # Secondary foreground (text on dark tooltip surfaces)
@@ -190,10 +177,10 @@ def generate_qlementine_theme(
     # =====================================================================
     # Border colors
     # =====================================================================
-    theme["border_color_disabled"] = gry[3]  # Radix step 4
-    theme["border_color"] = gry[6]          # Radix step 7: borders
-    theme["border_color_hovered"] = gry[7]  # Radix step 8: hover border
-    theme["border_color_pressed"] = gry[8]  # Radix step 9: pressed border
+    theme["border_color_disabled"] = gry[3]
+    theme["border_color"] = gry[6]
+    theme["border_color_hovered"] = gry[7]
+    theme["border_color_pressed"] = gry[8]
 
     # =====================================================================
     # Shadow colors
@@ -223,10 +210,10 @@ def generate_qlementine_theme(
         theme["semi_transparent_color4"] = _hex_with_alpha("#000000", 0.16)
 
     # =====================================================================
-    # Status colors (4 groups, each generated from fixed seeds)
+    # Status colors (4 groups from named Radix scales)
     # =====================================================================
-    for status_name in ("success", "info", "warning", "error"):
-        s = status_scales[status_name]["accentScale"]
+    for status_name, scale_name in STATUS_SCALES.items():
+        s = get_scale(scale_name, appearance)
         prefix = f"status_color_{status_name}"
         theme[prefix] = s[8]  # type: ignore[literal-required]
         theme[f"{prefix}_hovered"] = s[9]  # type: ignore[literal-required]
